@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Security Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            color: #1e3c72;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        input[type="password"], input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="password"]:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #2a5298;
+            box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.1);
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 42px;
+            cursor: pointer;
+            user-select: none;
+            font-size: 20px;
+        }
+
+        .strength-meter {
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .strength-meter-fill {
+            height: 100%;
+            width: 0;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .strength-weak { background: linear-gradient(90deg, #ff4757, #ff6348); }
+        .strength-fair { background: linear-gradient(90deg, #ffa502, #ff7675); }
+        .strength-good { background: linear-gradient(90deg, #ffd93d, #ffa502); }
+        .strength-strong { background: linear-gradient(90deg, #6bcf7f, #2ed573); }
+
+        .strength-text {
+            margin-top: 10px;
+            font-weight: 600;
+            text-align: center;
+            height: 20px;
+        }
+
+        .criteria {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .criteria h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .criteria-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .criteria-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .criteria-met {
+            background: #2ed573;
+            color: white;
+        }
+
+        .criteria-not-met {
+            background: #e0e0e0;
+            color: #999;
+        }
+
+        .breach-check {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .breach-safe {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .breach-compromised {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .breach-checking {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .generator-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .generator-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .option-group {
+            display: flex;
+            align-items: center;
+        }
+
+        .option-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        .option-group label {
+            margin-bottom: 0;
+            cursor: pointer;
+            font-weight: normal;
+        }
+
+        .length-control {
+            margin-bottom: 20px;
+        }
+
+        .length-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e0e0e0;
+            outline: none;
+            -webkit-appearance: none;
+            margin: 10px 0;
+        }
+
+        .length-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2a5298;
+            cursor: pointer;
+        }
+
+        .length-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2a5298;
+            cursor: pointer;
+            border: none;
+        }
+
+        .length-display {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #2a5298;
+            margin-top: 10px;
+        }
+
+        .button {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .button-primary {
+            background: linear-gradient(135deg, #2a5298, #1e3c72);
+            color: white;
+        }
+
+        .button-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(42, 82, 152, 0.3);
+        }
+
+        .generated-password {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .generated-password code {
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            color: #333;
+        }
+
+        .copy-button {
+            padding: 8px 16px;
+            background: #2a5298;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .copy-button:hover {
+            background: #1e3c72;
+        }
+
+        .copy-feedback {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: #2ed573;
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .copy-feedback.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .generator-options {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Password Security Analyzer</h1>
+        
+        <div class="input-group">
+            <label for="password">Enter Password to Analyze</label>
+            <input type="password" id="password" placeholder="Type your password here...">
+            <span class="toggle-password" onclick="togglePassword()">👁️</span>
+        </div>
+        
+        <div class="strength-meter">
+            <div class="strength-meter-fill" id="strengthFill"></div>
+        </div>
+        <div class="strength-text" id="strengthText"></div>
+        
+        <div class="criteria">
+            <h3>Password Criteria</h3>
+            <div class="criteria-item" id="lengthCriteria">
+                <span class="criteria-icon criteria-not-met">✗</span>
+                <span>At least 8 characters</span>
+            </div>
+            <div class="criteria-item" id="uppercaseCriteria">
+                <span class="criteria-icon criteria-not-met">✗</span>
+                <span>Contains uppercase letters (A-Z)</span>
+            </div>
+            <div class="criteria-item" id="lowercaseCriteria">
+                <span class="criteria-icon criteria-not-met">✗</span>
+                <span>Contains lowercase letters (a-z)</span>
+            </div>
+            <div class="criteria-item" id="numberCriteria">
+                <span class="criteria-icon criteria-not-met">✗</span>
+                <span>Contains numbers (0-9)</span>
+            </div>
+            <div class="criteria-item" id="specialCriteria">
+                <span class="criteria-icon criteria-not-met">✗</span>
+                <span>Contains special characters (!@#$%^&*)</span>
+            </div>
+        </div>
+        
+        <div class="breach-check" id="breachCheck" style="display: none;"></div>
+        
+        <div class="generator-section">
+            <h3>Password Generator</h3>
+            
+            <div class="length-control">
+                <label for="lengthSlider">Password Length</label>
+                <input type="range" id="lengthSlider" class="length-slider" min="8" max="32" value="16">
+                <div class="length-display" id="lengthDisplay">16</div>
+            </div>
+            
+            <div class="generator-options">
+                <div class="option-group">
+                    <input type="checkbox" id="includeUppercase" checked>
+                    <label for="includeUppercase">Uppercase (A-Z)</label>
+                </div>
+                <div class="option-group">
+                    <input type="checkbox" id="includeLowercase" checked>
+                    <label for="includeLowercase">Lowercase (a-z)</label>
+                </div>
+                <div class="option-group">
+                    <input type="checkbox" id="includeNumbers" checked>
+                    <label for="includeNumbers">Numbers (0-9)</label>
+                </div>
+                <div class="option-group">
+                    <input type="checkbox" id="includeSpecial" checked>
+                    <label for="includeSpecial">Special (!@#$%^&*)</label>
+                </div>
+            </div>
+            
+            <button class="button button-primary" onclick="generatePassword()">Generate Secure Password</button>
+            
+            <div class="generated-password" id="generatedPasswordContainer" style="display: none;">
+                <code id="generatedPassword"></code>
+                <button class="copy-button" onclick="copyPassword()">Copy</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="copy-feedback" id="copyFeedback">Password copied to clipboard!</div>
+
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>
